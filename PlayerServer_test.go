@@ -17,12 +17,12 @@ func TestGETPlayers(t *testing.T) {
         assertResponseBody(t, response.Body.String(), "20")
     })
     t.Run("returns Floyd's score", func(t *testing.T) {
-        request := newGetScoreRequest("Pepper")
+        request := newGetScoreRequest("Floyd")
         response := httptest.NewRecorder()
     
         PlayerServer(response, request)
     
-        assertResponseBody(t, response.Body.String(), "20")
+        assertResponseBody(t, response.Body.String(), "10")
     })
 }
 

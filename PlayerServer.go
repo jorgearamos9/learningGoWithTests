@@ -9,6 +9,7 @@ import (
 // PlayerServer implemenents the http server logic 
 func PlayerServer(w http.ResponseWriter, r *http.Request) {
 	player := strings.TrimPrefix(r.URL.Path, "/players/")
+	fmt.Printf("Got a request with URL %s, for player: %s\n",r.URL.Path,player)
 	fmt.Fprint(w, GetPlayerScore(player))
 }
 
