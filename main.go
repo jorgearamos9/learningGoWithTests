@@ -12,6 +12,9 @@ func (i *InMemoryPlayerStore) GetPlayerScore(name string) int {
     fmt.Printf("Inside GetPlayerScore, name received: %s\n", name)
     return 123
 }
+func (i *InMemoryPlayerStore) RecordWin(name string) {
+    fmt.Printf("Inside RecordWin, name received: %s\n", name)
+}
 
 func main() {
     server := &PlayerServer{&InMemoryPlayerStore{}}
