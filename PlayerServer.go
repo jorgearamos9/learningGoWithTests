@@ -3,7 +3,13 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"encoding/json"
 )
+
+type Player struct {
+    Name string
+    Wins int
+}
 
 type PlayerStore interface {
 	GetPlayerScore(name string) int
@@ -13,24 +19,31 @@ type PlayerStore interface {
 // PlayerServer implemenents the http server logic
 type PlayerServer struct {
 	store PlayerStore
-	router *http.ServeMux
+	http.Handler
 }
 func NewPlayerServer(store PlayerStore) *PlayerServer {
-    p := &PlayerServer{
-        store,
-        http.NewServeMux(),
-    }
+	p := new(PlayerServer)
+	
+	p.store = store
 
-    p.router.Handle("/league", http.HandlerFunc(p.leagueHandler))
-    p.router.Handle("/players/", http.HandlerFunc(p.playersHandler))
+	router := http.NewServeMux()
+    router.Handle("/league", http.HandlerFunc(p.leagueHandler))
+    router.Handle("/players/", http.HandlerFunc(p.playersHandler))
+
+	p.Handler = router
 
     return p
 }
 
 func (p *PlayerServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-    p.router.ServeHTTP(w, r)
+    p.Handler.ServeHTTP(w, r)
 }
 func (p *PlayerServer) leagueHandler(w http.ResponseWriter, r *http.Request){
+	leagueTable := []Player{
+        {"Chris", 20},
+    }
+
+    json.NewEncoder(w).Encode(leagueTable)
 	w.WriteHeader(http.StatusOK)
 }
 func (p *PlayerServer) playersHandler(w http.ResponseWriter, r *http.Request){
