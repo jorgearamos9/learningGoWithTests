@@ -14,6 +14,8 @@ type Player struct {
 type PlayerStore interface {
 	GetPlayerScore(name string) int
 	RecordWin(name string)
+	GetLeague() []Player
+
 }
 
 // PlayerServer implemenents the http server logic
@@ -39,13 +41,10 @@ func (p *PlayerServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     p.Handler.ServeHTTP(w, r)
 }
 func (p *PlayerServer) leagueHandler(w http.ResponseWriter, r *http.Request){
-	leagueTable := []Player{
-        {"Chris", 20},
-    }
-
-    json.NewEncoder(w).Encode(leagueTable)
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(p.store.GetLeague())
 }
+
 func (p *PlayerServer) playersHandler(w http.ResponseWriter, r *http.Request){
 	player := r.URL.Path[len("/players/"):]
 		switch r.Method {
