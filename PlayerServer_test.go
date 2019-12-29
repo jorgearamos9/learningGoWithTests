@@ -73,6 +73,7 @@ func TestStoreWins(t *testing.T) {
 
 	})
 }
+const jsonContentType = "application/json"
 func TestLeague(t *testing.T) {
 
     t.Run("it returns 200 on /league", func(t *testing.T) {
@@ -93,6 +94,7 @@ func TestLeague(t *testing.T) {
         got := getLeagueFromResponse(t, response.Body)
         assertStatus(t, response.Code, http.StatusOK)
         assertLeague(t, got, wantedLeague)
+        assertContentType(t, response, jsonContentType)
     })
 }
 // Integration test
@@ -105,11 +107,25 @@ func TestRecordingWinsAndRetrievingThem(t *testing.T) {
     server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
     server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
 
-    response := httptest.NewRecorder()
-    server.ServeHTTP(response, newGetScoreRequest(player))
-    assertStatus(t, response.Code, http.StatusOK)
+    t.Run("get score", func(t *testing.T) {
+        response := httptest.NewRecorder()
+        server.ServeHTTP(response, newGetScoreRequest(player))
+        assertStatus(t, response.Code, http.StatusOK)
 
-    assertResponseBody(t, response.Body.String(), "3")
+        assertResponseBody(t, response.Body.String(), "3")
+    })
+
+    t.Run("get league", func(t *testing.T) {
+        response := httptest.NewRecorder()
+        server.ServeHTTP(response, newLeagueRequest())
+        assertStatus(t, response.Code, http.StatusOK)
+
+        got := getLeagueFromResponse(t, response.Body)
+        want := []Player{
+            {"Pepper", 3},
+        }
+        assertLeague(t, got, want)
+    })
 }
 
 type StubPlayerStore struct {
@@ -177,4 +193,11 @@ func assertLeague(t *testing.T, got, want []Player) {
 func newLeagueRequest() *http.Request {
     req, _ := http.NewRequest(http.MethodGet, "/league", nil)
     return req
+}
+
+func assertContentType(t *testing.T, response *httptest.ResponseRecorder, want string) {
+    t.Helper()
+    if response.Result().Header.Get("content-type") != want {
+        t.Errorf("response did not have content-type of %s, got %v", want, response.Result().Header)
+    }
 }
