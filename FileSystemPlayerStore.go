@@ -5,7 +5,7 @@ import (
 )
 
 type FileSystemPlayerStore struct {
-	database io.ReadSeeker // Needed to be able to use Seek to go back to the first byte read
+	database io.ReadWriteSeeker // Needed to be able to use Seek to go back to the first byte read
 }
 
 func (f *FileSystemPlayerStore) GetLeague() []Player {

@@ -7,7 +7,8 @@ import (
     "testing"
     "reflect"
     "io"
-    "strings"
+    "io/ioutil"
+    "os"
 )
 
 func TestGETPlayers(t *testing.T) {
@@ -97,43 +98,14 @@ func TestLeague(t *testing.T) {
         assertContentType(t, response, jsonContentType)
     })
 }
-// Integration test
-func TestRecordingWinsAndRetrievingThem(t *testing.T) {
-    store := NewInMemoryPlayerStore()
-    server := NewPlayerServer(store)
-    player := "Pepper"
-
-    server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
-    server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
-    server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
-
-    t.Run("get score", func(t *testing.T) {
-        response := httptest.NewRecorder()
-        server.ServeHTTP(response, newGetScoreRequest(player))
-        assertStatus(t, response.Code, http.StatusOK)
-
-        assertResponseBody(t, response.Body.String(), "3")
-    })
-
-    t.Run("get league", func(t *testing.T) {
-        response := httptest.NewRecorder()
-        server.ServeHTTP(response, newLeagueRequest())
-        assertStatus(t, response.Code, http.StatusOK)
-
-        got := getLeagueFromResponse(t, response.Body)
-        want := []Player{
-            {"Pepper", 3},
-        }
-        assertLeague(t, got, want)
-    })
-}
 
 func TestFileSystemStore(t *testing.T) {
 
     t.Run("/league from a reader", func(t *testing.T) {
-        database := strings.NewReader(`[
+        database, cleanDatabase := createTempFile(t, `[
             {"Name": "Cleo", "Wins": 10},
             {"Name": "Chris", "Wins": 33}]`)
+        defer cleanDatabase()
 
         store := FileSystemPlayerStore{database}
 
@@ -151,9 +123,10 @@ func TestFileSystemStore(t *testing.T) {
         assertLeague(t, got, want)
     })
     t.Run("get player score", func(t *testing.T) {
-        database := strings.NewReader(`[
+        database, cleanDatabase := createTempFile(t, `[
             {"Name": "Cleo", "Wins": 10},
             {"Name": "Chris", "Wins": 33}]`)
+        defer cleanDatabase()
     
         store := FileSystemPlayerStore{database}
     
@@ -165,11 +138,23 @@ func TestFileSystemStore(t *testing.T) {
     })
 }
 
-func assertScoreEquals(t *testing.T, got, want int) {
-	t.Helper()
-	if got != want {
-        t.Errorf("got %d want %d", got, want)
+func createTempFile(t *testing.T, initialData string) (io.ReadWriteSeeker, func()) {
+    t.Helper()
+
+    tmpfile, err := ioutil.TempFile("", "db")
+
+    if err != nil {
+        t.Fatalf("could not create temp file %v", err)
     }
+
+    tmpfile.Write([]byte(initialData))
+
+    removeFile := func() {
+        tmpfile.Close()
+        os.Remove(tmpfile.Name())
+    }
+
+    return tmpfile, removeFile
 }
 
 type StubPlayerStore struct {
@@ -243,5 +228,12 @@ func assertContentType(t *testing.T, response *httptest.ResponseRecorder, want s
     t.Helper()
     if response.Result().Header.Get("content-type") != want {
         t.Errorf("response did not have content-type of %s, got %v", want, response.Result().Header)
+    }
+}
+
+func assertScoreEquals(t *testing.T, got, want int) {
+	t.Helper()
+	if got != want {
+        t.Errorf("got %d want %d", got, want)
     }
 }
