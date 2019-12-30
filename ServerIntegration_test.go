@@ -8,9 +8,12 @@ import (
 
 // Integration test
 func TestRecordingWinsAndRetrievingThem(t *testing.T) {
-	database, cleanDatabase := createTempFile(t, "")
+	database, cleanDatabase := createTempFile(t, "[]")
 	defer cleanDatabase()
-	store := NewFileSystemPlayerStore(database)
+	store, err := NewFileSystemPlayerStore(database)
+	
+	assertNoError(t, err)
+
 	server := NewPlayerServer(store)
 	player := "Pepper"
 
@@ -37,4 +40,11 @@ func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 		}
 		assertLeague(t, got, want)
 	})
+}
+
+func assertNoError(t *testing.T, err error) {
+    t.Helper()
+    if err != nil {
+        t.Fatalf("didn't expect an error but got one, %v", err)
+    }
 }
