@@ -1,6 +1,6 @@
 package main
 
-/* 
+/*
 There is some more naivety in the way we are dealing with files which could create a very nasty bug down the line.
 When we RecordWin, we Seek back to the start of the file and then write the new data—but what if the new data was smaller than what was there before?
 In our current case, this is impossible. We never edit or delete scores so the data can only get bigger. However, it would be irresponsible for us to leave the code like this; it's not unthinkable that a delete scenario could come up.
@@ -22,7 +22,7 @@ func NewFileSystemPlayerStore(database io.ReadWriteSeeker) *FileSystemPlayerStor
         league:   league,
     }
 }
-Finally, we can get the amazing payoff we wanted by removing the Seek call from RecordWin. Yes, it doesn't feel much, but at least it means if we do any other kind of writes we can rely on our Write to behave how we need it to. 
+Finally, we can get the amazing payoff we wanted by removing the Seek call from RecordWin. Yes, it doesn't feel much, but at least it means if we do any other kind of writes we can rely on our Write to behave how we need it to.
 Plus it will now let us test the potentially problematic code separately and fix it.
 */
 
@@ -31,11 +31,11 @@ import (
 )
 
 type tape struct {
-    file *os.File
+	file *os.File
 }
 
 func (t *tape) Write(p []byte) (n int, err error) {
 	t.file.Truncate(0)
-    t.file.Seek(0, 0)
-    return t.file.Write(p)
+	t.file.Seek(0, 0)
+	return t.file.Write(p)
 }

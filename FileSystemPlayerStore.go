@@ -7,16 +7,16 @@ import (
 
 type FileSystemPlayerStore struct {
 	database *json.Encoder // Needed to be able to use Seek to go back to the first byte read
-	league League
+	league   League
 }
 
 func NewFileSystemPlayerStore(file *os.File) *FileSystemPlayerStore {
-    file.Seek(0, 0)
-    league, _ := NewLeague(file)
-    return &FileSystemPlayerStore{
-        database: json.NewEncoder(&tape{file}),
-        league:league,
-    }
+	file.Seek(0, 0)
+	league, _ := NewLeague(file)
+	return &FileSystemPlayerStore{
+		database: json.NewEncoder(&tape{file}),
+		league:   league,
+	}
 }
 
 func (f *FileSystemPlayerStore) GetLeague() League {
